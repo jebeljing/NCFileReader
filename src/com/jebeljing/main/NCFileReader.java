@@ -1,162 +1,154 @@
 package com.jebeljing.main;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class NCFileReader {
+	
+	private String fileName;
+	private BufferedReader br = null;
+	
+	private List<String> minZs = new ArrayList<String>();
+	private List<String> maxFs = new ArrayList<String>();
+	private List<String> maxSs = new ArrayList<String>();
+	private int zIndex = -1;
+	private int fIndex = -1;
+	private int sIndex = -1;
+	private double minZ = 0;
+	private double maxF = 0;
+	private double maxS = 0;
 
-	public void searchFile() {
-		
+	public NCFileReader(String fileName) {
+		this.fileName = fileName;
 	}
 	
-	public static void main(String[] args) {
-		List<String> minZs = new ArrayList<String>();
-		List<String> maxFs = new ArrayList<String>();
-		List<String> maxSs = new ArrayList<String>();
-		int zIndex = -1;
-		int fIndex = -1;
-		int sIndex = -1;
-		double minZ = 0;
-		double maxF = 0;
-		double maxS = 0;
-		int lineNum = 0;
-		int tempLine = 0;
-		BufferedReader br = null;
-		try {
-//			br = new BufferedReader(new FileReader("C:\\Users\\lalala123\\Desktop\\test1.txt"));
-			br = new BufferedReader(new FileReader("C:\\Users\\lalala123\\Desktop\\The Original_NC.NC"));
-			String line;
-			while((line = br.readLine()) != null) {
-				if (line.startsWith("N") && line.contains("M6")) {
-					minZ = 0;
-					maxF = 0;
-					maxS = 0;
-					zIndex++;
-					fIndex++;
-					sIndex++;
-//					System.out.println(tempLine + 1);
-				} else if (line.startsWith("N") && (line.contains("Z") || line.contains("Z-"))) {
-//					System.out.println(line);
-					if (line.contains("Z-")) {
-						String zString = line.substring(line.indexOf("Z-"));
-						int lastSpaceIdx = zString.indexOf(" ");
-						if (lastSpaceIdx > 0) {
-							Double zVal = Double.valueOf(zString.substring(2, lastSpaceIdx));
-							if (zVal > minZ) {
-								minZ = zVal;
-								if (zIndex == minZs.size()) {
-									minZs.add(zString.substring(2, lastSpaceIdx));
-								} else {
-									minZs.set(zIndex, zString.substring(2, lastSpaceIdx));
-								}
-								lineNum = tempLine;
-							}
-						} else {
-							Double zVal = Double.valueOf(zString.substring(2));
-							if (zVal > minZ) {
-								minZ = zVal;
-								if (zIndex == minZs.size()) {
-									minZs.add(zString.substring(2));
-								} else {
-									minZs.set(zIndex, zString.substring(2));
-								}
-								lineNum = tempLine;
-							}
-						}
-					} else if (line.contains("Z")) {
-						String zString = line.substring(line.indexOf("Z"));
-						int lastSpaceIdx = zString.indexOf(" ");
-						if (lastSpaceIdx > 0) {
-							Double zVal = Double.valueOf(zString.substring(1, lastSpaceIdx));
-							if (zVal > minZ) {
-								minZ = zVal;
-								if (zIndex == minZs.size()) {
-									minZs.add(zString.substring(1, lastSpaceIdx));
-								} else {
-									minZs.set(zIndex, zString.substring(1, lastSpaceIdx));
-								}
-								lineNum = tempLine;
-							}
-						} else {
-							Double zVal = Double.valueOf(zString.substring(1));
-							if (zVal > minZ) {
-								minZ = zVal;
-								if (zIndex == minZs.size()) {
-									minZs.add(zString.substring(1));
-								} else {
-									minZs.set(zIndex, zString.substring(1));
-								}
-								lineNum = tempLine;
-							}
-						}
-					}
-				} 
-				if (line.startsWith("N") && line.contains("F")) {
-					String fString = line.substring(line.indexOf("F"));
-					int lastSpaceIdx = fString.indexOf(" ");
-					if (lastSpaceIdx > 0) {
-						Double fVal = Double.valueOf(fString.substring(1, lastSpaceIdx));
-						if (fVal > maxF) {
-							maxF = fVal;
-							if (fIndex == maxFs.size()) {
-								maxFs.add(fString.substring(1, lastSpaceIdx));
-							} else {
-								maxFs.set(fIndex, fString.substring(1, lastSpaceIdx));
-							}
-							lineNum = tempLine;
-						}
-					} else {
-						Double fVal = Double.valueOf(fString.substring(1));
-						if (fVal > maxF) {
-							maxF = fVal;
-							if (fIndex == maxFs.size()) {
-								maxFs.add(fString.substring(1));
-							} else {
-								maxFs.set(fIndex, fString.substring(1));
-							}
-							lineNum = tempLine;
-						}
-					}
+	public void beginWork() throws IOException {
+		readFile();
+		String line;
+		while ((line = br.readLine()) != null) {
+			if (line.startsWith("N")) {
+				if (line.contains("M6")) {
+					initializeVal();
 				}
-				if (line.startsWith("N") && line.contains("S")) {
-					String sString = line.substring(line.indexOf("S"));
-					int lastSpaceIdx = sString.indexOf(" ");
-					if (lastSpaceIdx > 0) {
-						Double sVal = Double.valueOf(sString.substring(1, lastSpaceIdx));
-						if (sVal > maxS) {
-							maxS = sVal;
-							if (sIndex == maxSs.size()) {
-								maxSs.add(sString.substring(1, lastSpaceIdx));
-							} else {
-								maxSs.set(sIndex, sString.substring(1, lastSpaceIdx));
-							}
-							lineNum = tempLine;
-						}
-					} else {
-						Double sVal = Double.valueOf(sString.substring(1));
-						if (sVal > maxS) {
-							maxS = sVal;
-							if (sIndex == maxSs.size()) {
-								maxSs.add(sString.substring(1));
-							} else {
-								maxSs.set(sIndex, sString.substring(1));
-							}
-							lineNum = tempLine;
-						}
-					}
-				}
-				tempLine++;
+				scanForZ(line);
+				scan(line, "F", maxF, maxFs, fIndex);
+				scan(line, "S", maxS, maxSs, sIndex);
 			}
-			lineNum++;
-//			System.out.println("Line = " + lineNum + ", maxZ = " + maxZ);
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
-		
-		for (int i = 0; i < minZs.size(); i++) {
-			System.out.println("Result: minZ=" + minZs.get(i) + ", maxF=" + maxFs.get(i) + ", maxS=" + maxSs.get(i));
+		printVal();
+	}
+
+	private void scan(String line, String searchStr, double maxVal, List<String> vals, int index) {
+		if (line.contains(searchStr)) {
+			String sString = line.substring(line.indexOf(searchStr));
+			int lastSpaceIdx = sString.indexOf(" ");
+			if (lastSpaceIdx > 0) {
+				Double sVal = Double.valueOf(sString.substring(1, lastSpaceIdx));
+				if (sVal > maxVal) {
+					maxVal = sVal;
+					if (index == vals.size()) {
+						vals.add(sString.substring(1, lastSpaceIdx));
+					} else {
+						vals.set(index, sString.substring(1, lastSpaceIdx));
+					}
+				}
+			} else {
+				Double sVal = Double.valueOf(sString.substring(1));
+				if (sVal > maxVal) {
+					maxVal = sVal;
+					if (index == vals.size()) {
+						vals.add(sString.substring(1));
+					} else {
+						vals.set(index, sString.substring(1));
+					}
+				}
+			}
+		}
+	}
+
+	private void scanForZ(String line) {
+		if (line.contains("Z") || line.contains("Z-")) {
+			if (line.contains("Z-")) {
+				String zString = line.substring(line.indexOf("Z-"));
+				int lastSpaceIdx = zString.indexOf(" ");
+				if (lastSpaceIdx > 0) {
+					Double zVal = Double.valueOf(zString.substring(2, lastSpaceIdx));
+					if (zVal > minZ) {
+						minZ = zVal;
+						if (zIndex == minZs.size()) {
+							minZs.add(zString.substring(2, lastSpaceIdx));
+						} else {
+							minZs.set(zIndex,
+									zString.substring(2, lastSpaceIdx));
+						}
+					}
+				} else {
+					Double zVal = Double.valueOf(zString.substring(2));
+					if (zVal > minZ) {
+						minZ = zVal;
+						if (zIndex == minZs.size()) {
+							minZs.add(zString.substring(2));
+						} else {
+							minZs.set(zIndex, zString.substring(2));
+						}
+					}
+				}
+			} else if (line.contains("Z")) {
+				String zString = line.substring(line.indexOf("Z"));
+				int lastSpaceIdx = zString.indexOf(" ");
+				if (lastSpaceIdx > 0) {
+					Double zVal = Double.valueOf(zString.substring(1, lastSpaceIdx));
+					if (zVal > minZ) {
+						minZ = zVal;
+						if (zIndex == minZs.size()) {
+							minZs.add(zString.substring(1, lastSpaceIdx));
+						} else {
+							minZs.set(zIndex, zString.substring(1, lastSpaceIdx));
+						}
+					}
+				} else {
+					Double zVal = Double.valueOf(zString.substring(1));
+					if (zVal > minZ) {
+						minZ = zVal;
+						if (zIndex == minZs.size()) {
+							minZs.add(zString.substring(1));
+						} else {
+							minZs.set(zIndex, zString.substring(1));
+						}
+					}
+				}
+			}
+		}
+	}
+
+	private void printVal() {
+		if (minZs.size() == maxFs.size() && maxFs.size() == maxSs.size()) {
+			for (int i = 0; i < minZs.size(); i++) {
+				System.out.println("Z=" + minZs.get(i) + ", F=" + maxFs.get(i) + ", S=" + maxSs.get(i));
+			}
+		} else {
+			System.out.println("Error. The number of S, F, Z are different.");
+		}
+	}
+
+	private void initializeVal() {
+		minZ = 0;
+		maxF = 0;
+		maxS = 0;
+		zIndex++;
+		fIndex++;
+		sIndex++;
+	}
+	
+	private void readFile() {
+		try {
+			br = new BufferedReader(new FileReader(fileName)); //"C:\\Users\\lalala123\\Desktop\\The Original_NC.NC"
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
 		}
 	}
 }
